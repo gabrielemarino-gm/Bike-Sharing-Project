@@ -156,12 +156,17 @@ curl -X GET http://localhost:5001/
 **Risposta:**
 ```json
 {
-  "status": "OK",
-  "message": "Bike Sharing API",
+  "database": {
+    "status": "Connected",
+    "total_records": 17379
+  },
   "endpoints": {
+    "analytics": "/api/analytics/",
     "data": "/api/data/",
-    "analytics": "/api/analytics/"
-  }
+    "prediction": "/api/prediction/"
+  },
+  "message": "Bike Sharing API is running!",
+  "status": "OK"
 }
 ```
 
@@ -176,11 +181,37 @@ curl -X POST \
 **Risposta:**
 ```json
 {
-  "success": true,
-  "message": "Dataset caricato con successo",
-  "records_loaded": 17379,
-  "columns": ["instant", "dteday", "season", "yr", "mnth", "hr", ...]
+  "data": {
+    "batch_size": 1000,
+    "database_stats": {
+      "date_range": {
+        "max_date": "2012-12-31",
+        "min_date": "2011-01-01"
+      },
+      "seasonal_distribution": {
+        "season_1": 4242,
+        "season_2": 4409,
+        "season_3": 4496,
+        "season_4": 4232
+      },
+      "total_records": 17379,
+      "weather_distribution": {
+        "weather_1": 11413,
+        "weather_2": 4544,
+        "weather_3": 1419,
+        "weather_4": 3
+      }
+    },
+    "error_count": 0,
+    "filename": "hour.csv",
+    "success_count": 17379,
+    "success_rate": 100.0,
+    "total_records": 17379
+  },
+  "message": "Dataset caricato con successo!",
+  "success": true
 }
+
 ```
 
 ### 3. Analisi Pattern Orari
@@ -252,15 +283,25 @@ curl -X POST \
 **Risposta:**
 ```json
 {
-  "success": true,
-  "message": "Model random_forest trained successfully",
-  "model_type": "random_forest",
-  "training_metrics": {
-    "accuracy": 0.9234,
-    "precision": 0.9156,
-    "recall": 0.9312,
-    "f1_score": 0.9233
-  }
+  "accuracy": 0.883199079401611,
+  "confusion_matrix": [
+    [
+      2418,
+      364
+    ],
+    [
+      42,
+      652
+    ]
+  ],
+  "f1_score": 0.7625730994152047,
+  "negative_samples": 2782,
+  "positive_samples": 694,
+  "pr_auc": 0.9012461968234616,
+  "precision": 0.6417322834645669,
+  "recall": 0.9394812680115274,
+  "roc_auc": 0.9706869189955187,
+  "test_samples": 3476
 }
 ```
 
@@ -292,11 +333,24 @@ curl -X POST \
 ```json
 {
   "prediction": {
-    "is_peak": true,
-    "peak_probability": 0.8567,
-    "peak_threshold": 428.0,
+    "features_used": [
+      "season",
+      "yr",
+      "mnth",
+      "hr",
+      "holiday",
+      "weekday",
+      "workingday",
+      "weathersit",
+      "temp",
+      "atemp",
+      "hum",
+      "windspeed"
+    ],
+    "is_peak": false,
     "model_type": "random_forest",
-    "features_used": ["season", "yr", "mnth", "hr", ...]
+    "peak_probability": 0.06422551258220652,
+    "peak_threshold": 321.0
   }
 }
 ```

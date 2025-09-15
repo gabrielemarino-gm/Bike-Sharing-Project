@@ -1,29 +1,28 @@
-FROM python:3.9-slim
+# Usa Python 3.11 slim come base
+FROM python:3.11-slim
 
+# Imposta la directory di lavoro
 WORKDIR /app
 
-# Install system dependencies (SQLite è incluso in Python)
-RUN apt-get update && apt-get install -y \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy requirements and install Python dependencies
+# Copia i file requirements per ottimizzare la cache Docker
 COPY requirements.txt .
+
+# Installa le dipendenze Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Copia tutto il codice del progetto
 COPY . .
 
-# Create directories
-RUN mkdir -p data ml_models
+# Crea le cartelle necessarie
+RUN mkdir -p machine_learning/weights instance
 
-# Expose port
-EXPOSE 5000
+# Espone la porta 5001
+EXPOSE 5001
 
-# Set environment variables
+# Imposta variabili d'ambiente
 ENV FLASK_APP=run.py
 ENV FLASK_ENV=production
-ENV DATABASE_URL=sqlite:///data/bike_sharing.db
+ENV PYTHONPATH=/app
 
-# Command to run the application
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "run:app"]
+# Comando per avviare l'applicazione
+CMD ["python", "run.py"]

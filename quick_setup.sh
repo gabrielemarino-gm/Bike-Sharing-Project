@@ -1,33 +1,37 @@
 #!/bin/bash
+# filepath: /Users/gabriele/Desktop/Altro/MoveSolution-Job-Interviews-Project/quick_setup.sh
 
-echo "🔧 Setup rapido per Bike Sharing API"
-echo "====================================="
+echo "🚴‍♂️ Bike Sharing API - Quick Setup"
+echo "=================================="
 
-# Vai nella directory del progetto
-cd /Users/gabriele/Desktop/Altro/MoveSolution-Job-Interviews-Project
-
-# Crea ambiente virtuale se non esiste
-if [ ! -d "venv" ]; then
-    echo "📦 Creazione ambiente virtuale..."
-    python3 -m venv venv
+# Controlla se Python è installato
+if ! command -v python3 &> /dev/null; then
+    echo "❌ Python3 non trovato. Installalo prima di continuare."
+    exit 1
 fi
 
-# Attiva ambiente virtuale
-echo "🔄 Attivazione ambiente virtuale..."
-source venv/bin/activate
+echo "✅ Python3 trovato"
 
-# Installa dipendenze essenziali
-echo "📥 Installazione dipendenze..."
-pip install --upgrade pip
-pip install Flask==2.3.3 Flask-SQLAlchemy==3.0.5 python-dotenv==1.0.0 pandas==2.1.1 scikit-learn==1.3.0 requests==2.31.0 joblib==1.3.2
+# Installa dipendenze
+echo "📦 Installazione dipendenze..."
+pip3 install -r requirements.txt
+if [ $? -eq 0 ]; then
+    echo "✅ Dipendenze installate"
+else
+    echo "❌ Errore installazione dipendenze"
+    exit 1
+fi
 
-# Crea directory necessarie
-echo "📁 Creazione directory..."
-mkdir -p data ml_models
+# Crea cartelle necessarie
+echo "📁 Creazione cartelle..."
+mkdir -p machine_learning/weights
+mkdir -p instance
+echo "✅ Cartelle create"
 
+# Avvia il server
+echo "🚀 Avvio server..."
+echo "Server disponibile su: http://localhost:5001"
+echo "Premi Ctrl+C per fermare il server"
 echo ""
-echo "✅ Setup completato!"
-echo ""
-echo "Per avviare l'app:"
-echo "1. source venv/bin/activate"
-echo "2. python run.py"
+
+python3 run.py

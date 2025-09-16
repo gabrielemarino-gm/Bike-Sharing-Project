@@ -6,7 +6,11 @@ Un'API REST completa per l'analisi e la predizione dei dati di bike sharing, cos
 
 - [Caratteristiche](#-caratteristiche)
 - [Installazione](#-installazione)
+  - [Installazione Locale](#-installazione-locale)
+  - [Installazione con Docker](#-installazione-con-docker)
 - [Avvio del Server](#-avvio-del-server)
+  - [Avvio Locale](#-avvio-locale)
+  - [Avvio con Docker](#-avvio-con-docker)
 - [Struttura del Progetto](#-struttura-del-progetto)
 - [API Endpoints](#-api-endpoints)
 - [Esempi di Utilizzo](#-esempi-di-utilizzo)
@@ -25,445 +29,251 @@ Un'API REST completa per l'analisi e la predizione dei dati di bike sharing, cos
 
 ## 🛠️ Installazione
 
-### Prerequisiti
+### 🏠 Installazione Locale
+
+#### Prerequisiti
 - Python 3.8+
 - pip
 
-### Setup Ambiente
+#### Setup Ambiente
 
 ```bash
 # Clone del repository
 git clone <repository-url>
-cd MoveSolution-Job-Interviews-Project
+cd Bike-Sharing-Project
 
-# Creazione ambiente virtuale (opzionale ma raccomandato)
+# Creazione ambiente virtuale (raccomandato)
 python -m venv venv
-source venv/bin/activate  # Su Windows: venv\Scripts\activate
+
+# Attivazione ambiente virtuale
+# Su macOS/Linux:
+source venv/bin/activate
+# Su Windows:
+# venv\Scripts\activate
 
 # Installazione dipendenze
-pip install flask flask-sqlalchemy pandas numpy scikit-learn joblib
+pip install -r requirements.txt
+```
+
+#### Struttura Directory
+```
+Bike-Sharing-Project/
+├── venv/                          # Ambiente virtuale
+├── instance/                      # Database SQLite
+├── app/                           # Codice applicazione
+├── database/                      # Moduli database
+├── machine_learning/              # Modelli ML
+└── run.py                         # Entry point
+```
+
+#### 🐳 Setup con Docker
+
+```bash
+# Clone del repository
+git clone <repository-url>
+cd Bike-Sharing-Project
+
+# Crea i file necessari (vedi sezione File di Configurazione)
+# Poi build dell'immagine Docker
+docker build -t bike-sharing-api .
 ```
 
 ## 🚀 Avvio del Server
 
+### 🏠 Avvio Locale
+
 ```bash
+# Assicurati che l'ambiente virtuale sia attivo
+source venv/bin/activate  # macOS/Linux
+# venv\Scripts\activate   # Windows
+
 # Avvio dell'applicazione
 python run.py
 ```
 
 Il server sarà disponibile su: `http://localhost:5001`
 
-## 📁 Struttura del Progetto
+### 🐳 Avvio con Docker
 
-```
-MoveSolution-Job-Interviews-Project/
-├── app/
-│   ├── __init__.py                 # App factory
-│   └── routes/
-│       ├── data_routes.py          # Endpoints per gestione dati
-│       ├── analytics_routes.py     # Endpoints per analisi
-│       └── prediction_routes.py    # Endpoints per ML
-├── database/
-│   ├── __init__.py                 # Configurazione database
-│   ├── bike_record.py              # Modello dati unificato
-│   ├── data_loader.py              # Caricamento dati
-│   └── data_analytics.py           # Logica di analisi
-├── machine_learning/
-│   ├── peak_demand_predictor.py    # Predizione picchi
-│   ├── rental_count_predictor.py   # Predizione conteggi
-│   └── weather_impact_predictor.py # Predizione impatto meteo
-├── instance/
-│   └── bike_sharing.db             # Database SQLite
-└── run.py                          # Entry point applicazione
-```
-
-## 🔌 API Endpoints
-
-### Health Check
-```bash
-GET /
-```
-
-### 📊 Data Management
-
-#### Caricamento Dataset
-```bash
-POST /api/data/load
-Content-Type: multipart/form-data
-```
-
-#### Statistiche Dataset
-```bash
-GET /api/data/stats
-```
-
-#### Status del Sistema
-```bash
-GET /api/data/status
-```
-
-### 📈 Analytics
-
-#### Pattern Orari
-```bash
-GET /api/analytics/mean-rental-by-hour
-```
-
-#### Confronto Weekday vs Weekend
-```bash
-GET /api/analytics/weekday-vs-weekend
-```
-
-#### Impatto Condizioni Meteo
-```bash
-GET /api/analytics/weather-impact
-```
-
-### 🤖 Machine Learning
-
-#### Training Modello Picchi
-```bash
-POST /api/prediction/train-peak-model
-Content-Type: application/json
-```
-
-#### Training Modello Conteggi
-```bash
-POST /api/prediction/train-rental-model
-Content-Type: application/json
-```
-
-#### Predizione Picchi di Domanda
-```bash
-POST /api/prediction/predict-peak-demand
-Content-Type: application/json
-```
-
-#### Predizione Conteggio Noleggi
-```bash
-POST /api/prediction/predict-rental-count
-Content-Type: application/json
-```
-
-## 💻 Esempi di Utilizzo
-
-### 1. Health Check del Sistema
+#### Comando Docker Run Raccomandato:
 
 ```bash
-curl -X GET http://localhost:5001/
+# Comando completo raccomandato per l'avvio
+docker run -d \
+  --name bike-sharing-api \
+  -p 5001:5001 \
+  -v $(pwd)/instance:/app/instance \
+  -v $(pwd)/machine_learning/weights:/app/machine_learning/weights \
+  --restart unless-stopped \
+  -e FLASK_ENV=production \
+  bike-sharing-api
 ```
 
-**Risposta:**
-```json
-{
-  "database": {
-    "status": "Connected",
-    "total_records": 17379
-  },
-  "endpoints": {
-    "analytics": "/api/analytics/",
-    "data": "/api/data/",
-    "prediction": "/api/prediction/"
-  },
-  "message": "Bike Sharing API is running!",
-  "status": "OK"
-}
+**Per test rapido senza volumi:**
+```bash
+# Test veloce senza persistenza dati
+docker run --rm -p 5001:5001 bike-sharing-api
 ```
 
-### 2. Caricamento Dataset CSV
+
+
+## 📡 API Endpoints
+
+### 📊 **Status Database**
+Verifica lo stato del database e le informazioni sui dati caricati.
 
 ```bash
-curl -X POST \
-  -F "file=@dataset.csv" \
-  http://localhost:5001/api/data/load
+curl http://localhost:5001/api/data/status
 ```
 
-**Risposta:**
-```json
-{
-  "data": {
-    "batch_size": 1000,
-    "database_stats": {
-      "date_range": {
-        "max_date": "2012-12-31",
-        "min_date": "2011-01-01"
-      },
-      "seasonal_distribution": {
-        "season_1": 4242,
-        "season_2": 4409,
-        "season_3": 4496,
-        "season_4": 4232
-      },
-      "total_records": 17379,
-      "weather_distribution": {
-        "weather_1": 11413,
-        "weather_2": 4544,
-        "weather_3": 1419,
-        "weather_4": 3
-      }
-    },
-    "error_count": 0,
-    "filename": "hour.csv",
-    "success_count": 17379,
-    "success_rate": 100.0,
-    "total_records": 17379
-  },
-  "message": "Dataset caricato con successo!",
-  "success": true
-}
+### 📤 **Caricamento Dataset**
+Carica un file CSV contenente i dati di bike sharing nel database con batch size configurabile.
 
+```bash
+curl -F "file=@path/you/file.csv" -F "batch_size=<Your-Batch>" http://localhost:5001/api/data/load
 ```
 
-### 3. Analisi Pattern Orari
+### 🕒 **Analisi Pattern Orari**
+Analizza la varie metriche di aggregazione oraria, come per esempio il numero medio di noleggi per ora.
 
 ```bash
 curl -X GET http://localhost:5001/api/analytics/mean-rental-by-hour
 ```
 
-**Risposta:**
-```json
-{
-  "hourly_patterns": [
-    {
-      "hour": 0,
-      "avg_rentals": 55.67,
-      "max_rentals": 331,
-      "min_rentals": 1,
-      "total_rentals": 40285,
-      "sample_count": 724
-    },
-    ...
-  ],
-  "summary": {
-    "peak_hour": {"hour": 8, "avg_rentals": 359.52},
-    "low_hour": {"hour": 4, "avg_rentals": 8.32}
-  }
-}
-```
-
-### 4. Confronto Weekday vs Weekend
+### 📅 **Analisi Weekday vs Weekend**
+Confronta le metriche aggregate distinguendo tra giorni feriali e weekend.
 
 ```bash
 curl -X GET http://localhost:5001/api/analytics/weekday-vs-weekend
 ```
 
-**Risposta:**
-```json
-{
-  "comparison": {
-    "Weekday": {
-      "avg_rentals": 191.35,
-      "max_rentals": 977,
-      "total_rentals": 2396126,
-      "sample_count": 12516
-    },
-    "Weekend": {
-      "avg_rentals": 202.72,
-      "max_rentals": 977,
-      "total_rentals": 986441,
-      "sample_count": 4863
-    }
-  },
-  "summary": {
-    "percentage_difference": 5.94,
-    "weekend_vs_weekday": "higher"
-  }
-}
-```
-
-### 5. Training Modello ML
+### 🌤️ **Analisi Impatto Meteo**
+Analizza l'influenza delle condizioni meteorologiche sui noleggi.
 
 ```bash
-curl -X POST \
-  -H "Content-Type: application/json" \
-  -d '{"model_type": "random_forest"}' \
+curl -X GET http://localhost:5001/api/analytics/weather-impact
+```
+
+### 🤖 **Training Modello Picchi di Domanda**
+Addestra il modello di machine learning per la previsione dei picchi di domanda.
+
+```bash
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"model_type": "logistic_regression"}' \
   http://localhost:5001/api/prediction/train-peak-model
 ```
 
-**Risposta:**
-```json
-{
-  "accuracy": 0.883199079401611,
-  "confusion_matrix": [
-    [
-      2418,
-      364
-    ],
-    [
-      42,
-      652
-    ]
-  ],
-  "f1_score": 0.7625730994152047,
-  "negative_samples": 2782,
-  "positive_samples": 694,
-  "pr_auc": 0.9012461968234616,
-  "precision": 0.6417322834645669,
-  "recall": 0.9394812680115274,
-  "roc_auc": 0.9706869189955187,
-  "test_samples": 3476
-}
-```
-
-### 6. Predizione Picchi di Domanda
+### 📈 **Training Modello Conteggio Noleggi**
+Addestra il modello di machine learning per la predizione del numero di noleggi.
 
 ```bash
-curl -X POST \
-  -H "Content-Type: application/json" \
-  -d '{
-    "input_data": {
-      "season": 1,
-      "yr": 0,
-      "mnth": 1,
-      "hr": 8,
-      "holiday": 0,
-      "weekday": 1,
-      "workingday": 1,
-      "weathersit": 1,
-      "temp": 0.24,
-      "atemp": 0.28,
-      "hum": 0.81,
-      "windspeed": 0.0
-    }
-  }' \
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"model_type": "random_forest"}' \
+  http://localhost:5001/api/prediction/train-rental-model
+```
+
+### 🌦️ **Training Modello Impatto Meteo**
+Addestra il modello di machine learning per l'analisi dell'impatto delle condizioni meteorologiche.
+
+```bash
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"model_type": "random_forest"}' \
+  http://localhost:5001/api/prediction/train-weather-model
+```
+
+### 🔮 **Predizione Picchi di Domanda**
+Predice se ci sarà un picco di domanda basandosi sui parametri forniti.
+
+```bash
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"input_data": {
+    "season": 1,
+    "yr": 0,
+    "mnth": 1,
+    "hr": 0,
+    "holiday": 0,
+    "weekday": 6,
+    "workingday": 0,
+    "weathersit": 1,
+    "temp": 0.24,
+    "atemp": 0.2879,
+    "hum": 0.81,
+    "windspeed": 0.0
+  }}' \ # Valori di esempio
   http://localhost:5001/api/prediction/predict-peak-demand
 ```
 
-**Risposta:**
-```json
-{
-  "prediction": {
-    "features_used": [
-      "season",
-      "yr",
-      "mnth",
-      "hr",
-      "holiday",
-      "weekday",
-      "workingday",
-      "weathersit",
-      "temp",
-      "atemp",
-      "hum",
-      "windspeed"
-    ],
-    "is_peak": false,
-    "model_type": "random_forest",
-    "peak_probability": 0.06422551258220652,
-    "peak_threshold": 321.0
-  }
-}
-```
+### 🌡️ **Predizione Impatto Meteo**
+Predice l'impatto delle condizioni meteorologiche sui noleggi.
 
-## 🤖 Machine Learning
-
-### Modelli Disponibili
-
-1. **Peak Demand Predictor**: Classifica se un'ora sarà di picco
-   - Modelli: Random Forest, Logistic Regression, Decision Tree
-   - Target: Binario (picco/non picco)
-
-2. **Rental Count Predictor**: Predice il numero esatto di noleggi
-   - Modelli: Random Forest, Linear Regression, Gradient Boosting
-   - Target: Continuo (numero noleggi)
-
-3. **Weather Impact Predictor**: Analizza l'impatto del meteo
-   - Modelli: Random Forest, SVM
-   - Target: Categorie di impatto meteo
-
-### Features Utilizzate
-
-```python
-features = [
-    'season',      # Stagione (1-4)
-    'yr',          # Anno (0: 2011, 1: 2012)
-    'mnth',        # Mese (1-12)
-    'hr',          # Ora (0-23)
-    'holiday',     # Festivo (0/1)
-    'weekday',     # Giorno settimana (0-6)
-    'workingday',  # Giorno lavorativo (0/1)
-    'weathersit',  # Condizione meteo (1-4)
-    'temp',        # Temperatura normalizzata
-    'atemp',       # Temperatura percepita
-    'hum',         # Umidità
-    'windspeed'    # Velocità vento
-]
-```
-
-## 🗃️ Database
-
-### Modello Dati Unificato
-
-La tabella `bike_records` contiene tutti i dati con schema:
-
-```sql
-CREATE TABLE bike_records (
-    id INTEGER PRIMARY KEY,
-    instant INTEGER,
-    dteday DATE,
-    season INTEGER,
-    yr INTEGER,
-    mnth INTEGER,
-    hr INTEGER,
-    holiday BOOLEAN,
-    weekday INTEGER,
-    workingday BOOLEAN,
-    weathersit INTEGER,
-    temp FLOAT,
-    atemp FLOAT,
-    hum FLOAT,
-    windspeed FLOAT,
-    casual INTEGER,
-    registered INTEGER,
-    cnt INTEGER
-);
-```
-
-### Posizione Database
-
-Il database SQLite viene salvato in: `instance/bike_sharing.db`
-
-## 🔧 Troubleshooting
-
-### Problemi Comuni
-
-#### 1. Errore "File not found"
 ```bash
-# Verificare che il server sia in esecuzione
-curl -X GET http://localhost:5001/
-```
-
-#### 2. Errore "No module named..."
-```bash
-# Reinstallare dipendenze
-pip install -r requirements.txt
-```
-
-#### 3. Database vuoto
-```bash
-# Caricare dataset prima delle analisi
-curl -X POST -F "file=@dataset.csv" http://localhost:5001/api/data/load
-```
-
-#### 4. Modello non trovato
-```bash
-# Addestrare modello prima delle predizioni
 curl -X POST -H "Content-Type: application/json" \
-  -d '{"model_type": "random_forest"}' \
-  http://localhost:5001/api/prediction/train-peak-model
+  -d '{"input_data": {
+    "season": 1,
+    "yr": 0,
+    "mnth": 1,
+    "hr": 0,
+    "holiday": 0,
+    "weekday": 6,
+    "workingday": 0,
+    "weathersit": 1,
+    "temp": 0.24,
+    "atemp": 0.2879,
+    "hum": 0.81,
+    "windspeed": 0.0
+  }}' \ # Valori di esempio
+  http://localhost:5001/api/prediction/predict-weather-impact
 ```
 
-### Log e Debug
+### 🚴 **Predizione Conteggio Noleggi**
+Predice il numero esatto di noleggi per le condizioni specificate.
 
-I log dell'applicazione vengono stampati sulla console durante l'esecuzione. Per maggiori dettagli, controllare:
+```bash
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"input_data": {
+    "season": 1,
+    "yr": 0,
+    "mnth": 1,
+    "hr": 0,
+    "holiday": 0,
+    "weekday": 6,
+    "workingday": 0,
+    "weathersit": 1,
+    "temp": 0.24,
+    "atemp": 0.2879,
+    "hum": 0.81,
+    "windspeed": 0.0
+  }}' \ # Valori di esempio
+  http://localhost:5001/api/prediction/predict-rental-count
+```
 
-- Messaggi di avvio del server
-- Errori di caricamento dati
-- Metriche di training dei modelli
-- Errori di predizione
+## 📝 Parametri di Input per le Predizioni
+
+### Parametri Comuni:
+- **season**: Stagione (1=primavera, 2=estate, 3=autunno, 4=inverno)
+- **yr**: Anno (0=2011, 1=2012)
+- **mnth**: Mese (1-12)
+- **hr**: Ora (0-23)
+- **holiday**: Festivo (0=no, 1=sì)
+- **weekday**: Giorno settimana (0=domenica, 6=sabato)
+- **workingday**: Giorno lavorativo (0=no, 1=sì)
+- **weathersit**: Condizioni meteo (1=sereno, 2=nuvoloso, 3=pioggia leggera, 4=pioggia forte)
+- **temp**: Temperatura normalizzata (0-1)
+- **atemp**: Temperatura percepita normalizzata (0-1)
+- **hum**: Umidità normalizzata (0-1)
+- **windspeed**: Velocità vento normalizzata (0-1)
+
+### Modelli di Machine Learning Supportati:
+E' possibile allenare e poi utilizzare i seguenti modelli ML:
+- **Picchi di Domanda**: `logistic_regression`, `random_forest`, `svm`
+- **Impatto Meteo**: `random_forest`, `linear_regression`, `gradient_boosting`
+- **Conteggio Noleggi**: `linear_regression`, `random_forest`, `gradient_boosting`
 
 ## 📝 Note
-
-- Il dataset deve essere in formato CSV con le colonne specificate nel modello
+- Non è possibile eseguire una predizione senza aver prima allenato il modello corrispondente.
+- Il database SQLite viene salvato in `instance/bike_sharing.db`
 - I modelli ML vengono salvati in `machine_learning/weights/`
-- Tutti gli endpoint restituiscono JSON con gestione errori standardizzata
+
+
+## Credits
+Sviluppato da [Gabriele Marino](https://github.com/gabrielemarino-gm)

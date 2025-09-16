@@ -199,8 +199,10 @@ curl -X POST -H "Content-Type: application/json" \
     "atemp": 0.2879,
     "hum": 0.81,
     "windspeed": 0.0
-  }}' \ # Valori di esempio
+  }}' \
   http://localhost:5001/api/prediction/predict-peak-demand
+
+  # I valori usati sono di esempio
 ```
 
 ### 🌡️ **Predizione Impatto Meteo**
@@ -221,8 +223,10 @@ curl -X POST -H "Content-Type: application/json" \
     "atemp": 0.2879,
     "hum": 0.81,
     "windspeed": 0.0
-  }}' \ # Valori di esempio
+  }}' \
   http://localhost:5001/api/prediction/predict-weather-impact
+
+  # I valori usati sono di esempio
 ```
 
 ### 🚴 **Predizione Conteggio Noleggi**
@@ -243,8 +247,10 @@ curl -X POST -H "Content-Type: application/json" \
     "atemp": 0.2879,
     "hum": 0.81,
     "windspeed": 0.0
-  }}' \ # Valori di esempio
+  }}' \
   http://localhost:5001/api/prediction/predict-rental-count
+
+  # I valori usati sono di esempio
 ```
 
 ## 📝 Parametri di Input per le Predizioni

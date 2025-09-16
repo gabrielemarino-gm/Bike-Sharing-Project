@@ -136,3 +136,6 @@ ml_models/*.pkl
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Machine Learning Weights
+machine_learning/weights/

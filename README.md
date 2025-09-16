@@ -271,9 +271,9 @@ curl -X POST -H "Content-Type: application/json" \
 
 ### Modelli di Machine Learning Supportati:
 E' possibile allenare e poi utilizzare i seguenti modelli ML:
-- **Picchi di Domanda**: `logistic_regression`, `random_forest`, `svm`
-- **Impatto Meteo**: `random_forest`, `linear_regression`, `gradient_boosting`
-- **Conteggio Noleggi**: `linear_regression`, `random_forest`, `gradient_boosting`
+- **Picchi di Domanda**: `logistic_regression`, `decision_tree`, `random_forest`,
+- **Conteggio Noleggi**: `linear_regression`, `decision_tree`, `random_forest`,
+- **Impatto Meteo**: `linear_regression`, `random_forest`,
 
 ## 📝 Note
 - Non è possibile eseguire una predizione senza aver prima allenato il modello corrispondente.

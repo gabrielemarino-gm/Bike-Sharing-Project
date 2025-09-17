@@ -154,6 +154,14 @@ Analizza l'influenza delle condizioni meteorologiche sui noleggi.
 curl -X GET http://localhost:5001/api/analytics/weather-impact
 ```
 
+### 📥 **Download Delle Analisi precedenti in CSV**
+Permette di scaricare tutte le analisi precedenti in un unico file CSV.
+Indicare il nome del file con `-o tuo-file.csv` per salvarlo localmente.
+
+```bash
+curl -X GET http://localhost:5001/api/analytics/download-all -o tuo-file.csv
+```
+
 ### 🤖 **Training Modello Picchi di Domanda**
 Addestra il modello di machine learning per la previsione dei picchi di domanda.
 
@@ -252,6 +260,36 @@ curl -X POST -H "Content-Type: application/json" \
 
   # I valori usati sono di esempio
 ```
+
+### 📥 **Download Predizioni in CSV**
+Permette di scaricare le predizioni su tutti i modelli in un unico file CSV.
+Le predizioni vengono effettuate sulla lista di input fornita. 
+Indicare il nome del file con `-o tuo-file.csv` per salvarlo localmente.
+
+```bash
+curl -X POST -H "Content-Type: application/json" \
+  -d '{
+    "input_data_list": [
+      {
+        "season": 1,
+        "yr": 0,
+        "mnth": 1,
+        "hr": 0,
+        "holiday": 0,
+        "weekday": 6,
+        "workingday": 0,
+        "weathersit": 1,
+        "temp": 0.24,
+        "atemp": 0.2879,
+        "hum": 0.81,
+        "windspeed": 0.0
+      }
+    ],
+    "prediction_types": ["peak_demand", "weather_impact", "rental_count"]
+  }' \
+  http://localhost:5001/api/prediction/download-all-predictions -o tuo-file.csv
+```
+
 
 ## 📝 Parametri di Input per le Predizioni
 

@@ -52,13 +52,10 @@ class WeatherImpactPredictor:
         else:
             raise ValueError(f"Tipo di modello non supportato: {self.model_type}")
     
-    def train(self, training_data):
+    def train(self):
         """
         Addestra il modello sui dati di training
-        
-        Args:
-            training_data (pd.DataFrame): Dataset con features e target 'cnt'
-            
+                    
         Returns:
             dict: Metriche di training
         """
@@ -176,7 +173,32 @@ class WeatherImpactPredictor:
         except Exception as e:
             predictor.logger.error(f"Errore durante la predizione: {str(e)}")
             raise
+    
+    def prepare_features_single(self, features):
+        """
+        Prepara features per una singola predizione
         
+        Args:
+            features (dict): Features di input
+            
+        Returns:
+            np.ndarray: Array 2D con features processate
+        """
+        
+        # Crea array con valori di default
+        feature_values = []
+        for feature in self.weather_features + self.temporal_features:
+            if feature in features:
+                feature_values.append(features[feature])
+            else:
+                # TODO: Forse meglio lanciare errore se mancano features
+                # raise ValueError(f"Feature mancante: {feature_name}")
+                self.logger.warning(f"Feature mancante: {feature}, uso valore di default 0")
+                feature_values.append(0)  # Valore di default se mancante
+        
+        return np.array(feature_values).reshape(1, -1) # Array 2D
+    
+  
 
     def save_model(self, filename=None):
         """Salva il modello addestrato"""

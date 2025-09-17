@@ -187,7 +187,7 @@ class WeatherImpactPredictor:
         
         # Crea array con valori di default
         feature_values = []
-        for feature in self.weather_features + self.temporal_features:
+        for feature in self.weather_features:
             if feature in features:
                 feature_values.append(features[feature])
             else:

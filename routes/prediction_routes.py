@@ -182,318 +182,243 @@ def predict_rental_count():
         logging.error(f"Errore nella previsione del conteggio noleggi: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-# curl -X POST -H "Content-Type: application/json" -d '{"input_data_list": [{"season": 1, "yr": 0, "mnth": 1, "hr": 0, "holiday": 0, "weekday": 6, "workingday": 0, "weathersit": 1, "temp": 0.24, "atemp": 0.2879, "hum": 0.81, "windspeed": 0.0}]}' http://localhost:5001/api/prediction/predict-peak-demand/download
+# curl -X POST -H "Content-Type: application/json" -d '{"input_data": {"season": 1, "yr": 0, "mnth": 1, "hr": 0, "holiday": 0, "weekday": 6, "workingday": 0, "weathersit": 1, "temp": 0.24, "atemp": 0.2879, "hum": 0.81, "windspeed": 0.0}}' http://localhost:5001/api/prediction/predict-peak-demand/download
 @prediction_bp.route('/predict-peak-demand/download', methods=['POST'])
 def download_peak_demand_predictions_csv():
     """Download predizioni domanda di picco in formato CSV"""
     try:
-        input_data_list = request.json.get('input_data_list', [])
-        if not input_data_list:
-            return jsonify({'error': 'Lista input_data_list richiesta'}), 400
+        input_data = request.json.get('input_data')
+        if not input_data:
+            return jsonify({'error': 'Richiesto input_data'}), 400
+
+        try:
+            prediction = PeakDemandPredictor.predict(input_data)
+            
+            print("Debug Peak Prediction", prediction)
+            logging.info(f"Prediction: {prediction}")
+            
+            # Estrai le features utilizzate dal modello
+            features_used = prediction.get('features_used', [])
+            
+            # Converti il valore booleano in formato numerico per il CSV
+            is_peak = prediction.get('is_peak', False)
+            predicted_peak = 1 if is_peak else 0
+            
+            # Estrai probabilità e soglia
+            peak_probability = round(float(prediction.get('peak_probability', 0)), 4)
+            peak_threshold = round(float(prediction.get('peak_threshold', 0)), 2)
+            
+            result_row = {
+                'prediction_id': 1,
+                # Features utilizzate dal modello (nell'ordine corretto)
+                'season': input_data.get('season', 'N/A'),
+                'yr': input_data.get('yr', 'N/A'),
+                'mnth': input_data.get('mnth', 'N/A'),
+                'hr': input_data.get('hr', 'N/A'),
+                'holiday': input_data.get('holiday', 'N/A'),
+                'weekday': input_data.get('weekday', 'N/A'),
+                'workingday': input_data.get('workingday', 'N/A'),
+                'weathersit': input_data.get('weathersit', 'N/A'),
+                'temp': input_data.get('temp', 'N/A'),
+                'atemp': input_data.get('atemp', 'N/A'),
+                'hum': input_data.get('hum', 'N/A'),
+                'windspeed': input_data.get('windspeed', 'N/A'),
+                # Risultati della predizione
+                'is_peak': predicted_peak,
+                'peak_probability': peak_probability,
+                'peak_threshold': peak_threshold,
+                'model_type': prediction.get('model_type', 'N/A'),
+                'features_count': len(features_used),
+                'status': 'success'
+            }
+            
+        except Exception as e:
+            logging.error(f"Errore nella predizione: {str(e)}")
+            result_row = {
+                'prediction_id': 1,
+                # Features (anche in caso di errore per mantenere la struttura)
+                'season': input_data.get('season', 'N/A'),
+                'yr': input_data.get('yr', 'N/A'),
+                'mnth': input_data.get('mnth', 'N/A'),
+                'hr': input_data.get('hr', 'N/A'),
+                'holiday': input_data.get('holiday', 'N/A'),
+                'weekday': input_data.get('weekday', 'N/A'),
+                'workingday': input_data.get('workingday', 'N/A'),
+                'weathersit': input_data.get('weathersit', 'N/A'),
+                'temp': input_data.get('temp', 'N/A'),
+                'atemp': input_data.get('atemp', 'N/A'),
+                'hum': input_data.get('hum', 'N/A'),
+                'windspeed': input_data.get('windspeed', 'N/A'),
+                # Risultati in errore
+                'is_peak': 'ERROR',
+                'peak_probability': 'ERROR',
+                'peak_threshold': 'ERROR',
+                'model_type': 'ERROR',
+                'features_count': 'ERROR',
+                'status': f'error: {str(e)}'
+            }
         
-        results = []
-        for i, input_data in enumerate(input_data_list):
-            try:
-                prediction = PeakDemandPredictor.predict(input_data)
-                result_row = {
-                    'prediction_id': i + 1,
-                    'season': input_data.get('season'),
-                    'yr': input_data.get('yr'),
-                    'mnth': input_data.get('mnth'),
-                    'hr': input_data.get('hr'),
-                    'holiday': input_data.get('holiday'),
-                    'weekday': input_data.get('weekday'),
-                    'workingday': input_data.get('workingday'),
-                    'weathersit': input_data.get('weathersit'),
-                    'temp': input_data.get('temp'),
-                    'atemp': input_data.get('atemp'),
-                    'hum': input_data.get('hum'),
-                    'windspeed': input_data.get('windspeed'),
-                    'predicted_peak': prediction.get('prediction', 'N/A'),
-                    'confidence': prediction.get('confidence', 'N/A'),
-                    'status': 'success'
-                }
-                results.append(result_row)
-            except Exception as e:
-                error_row = {
-                    'prediction_id': i + 1,
-                    'season': input_data.get('season'),
-                    'yr': input_data.get('yr'),
-                    'mnth': input_data.get('mnth'),
-                    'hr': input_data.get('hr'),
-                    'holiday': input_data.get('holiday'),
-                    'weekday': input_data.get('weekday'),
-                    'workingday': input_data.get('workingday'),
-                    'weathersit': input_data.get('weathersit'),
-                    'temp': input_data.get('temp'),
-                    'atemp': input_data.get('atemp'),
-                    'hum': input_data.get('hum'),
-                    'windspeed': input_data.get('windspeed'),
-                    'predicted_peak': 'ERROR',
-                    'confidence': 'ERROR',
-                    'status': f'error: {str(e)}'
-                }
-                results.append(error_row)
-        
-        headers = ['prediction_id', 'season', 'yr', 'mnth', 'hr', 'holiday', 'weekday', 
-                  'workingday', 'weathersit', 'temp', 'atemp', 'hum', 'windspeed', 
-                  'predicted_peak', 'confidence', 'status']
+        # Headers ordinati logicamente: ID, Features, Risultati, Status
+        headers = [
+            'prediction_id',
+            # Features utilizzate dal modello
+            'season', 'yr', 'mnth', 'hr', 'holiday', 'weekday', 'workingday', 
+            'weathersit', 'temp', 'atemp', 'hum', 'windspeed',
+            # Risultati della predizione
+            'is_peak', 'peak_probability', 'peak_threshold', 'model_type', 'features_count', 'status'
+        ]
         
         filename = f'peak_demand_predictions_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
         
-        return create_csv_response(results, filename, headers)
+        return create_csv_response([result_row], filename, headers)
         
     except Exception as e:
         logging.error(f"Errore nel download CSV predizioni picchi: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-# curl -X POST -H "Content-Type: application/json" -d '{"input_data_list": [{"season": 1, "yr": 0, "mnth": 1, "hr": 0, "holiday": 0, "weekday": 6, "workingday": 0, "temp": 0.24, "atemp": 0.2879, "hum": 0.81, "windspeed": 0.0}]}' http://localhost:5001/api/prediction/predict-weather-impact/download
+# curl -X POST -H "Content-Type: application/json" -d '{"input_data": {"weathersit": 1, "temp": 0.24, "atemp": 0.2879, "hum": 0.81, "windspeed": 0.0}}' http://localhost:5001/api/prediction/predict-weather-impact/download
 @prediction_bp.route('/predict-weather-impact/download', methods=['POST'])
 def download_weather_impact_predictions_csv():
     """Download predizioni impatto meteo in formato CSV"""
     try:
-        input_data_list = request.json.get('input_data_list', [])
-        if not input_data_list:
-            return jsonify({'error': 'Lista input_data_list richiesta'}), 400
+        input_data = request.json.get('input_data')
+        if not input_data:
+            return jsonify({'error': 'Richiesto input_data'}), 400
+
+        try:
+            prediction = WeatherImpactPredictor.predict(input_data)
+            
+            logging.info(f"Prediction: {prediction}")
+            
+            # Estrai le features utilizzate dal modello
+            features_used = prediction.get('features_used', [])
+            
+            result_row = {
+                'prediction_id': 1,
+                # Features utilizzate dal modello (nell'ordine corretto)
+                'weathersit': input_data.get('weathersit', 'N/A'),
+                'temp': input_data.get('temp', 'N/A'),
+                'atemp': input_data.get('atemp', 'N/A'),
+                'hum': input_data.get('hum', 'N/A'),
+                'windspeed': input_data.get('windspeed', 'N/A'),
+                # Risultati della predizione
+                'predicted_impact': round(float(prediction.get('predicted_impact', 0)), 6),
+                'model_type': prediction.get('model_type', 'N/A'),
+                'features_count': len(features_used),
+                'status': 'success'
+            }
+            
+        except Exception as e:
+            logging.error(f"Errore nella predizione: {str(e)}")
+            result_row = {
+                'prediction_id': 1,
+                # Features (anche in caso di errore per mantenere la struttura)
+                'weathersit': input_data.get('weathersit', 'N/A'),
+                'temp': input_data.get('temp', 'N/A'),
+                'atemp': input_data.get('atemp', 'N/A'),
+                'hum': input_data.get('hum', 'N/A'),
+                'windspeed': input_data.get('windspeed', 'N/A'),
+                # Risultati in errore
+                'predicted_impact': 'ERROR',
+                'model_type': 'ERROR',
+                'features_count': 'ERROR',
+                'status': f'error: {str(e)}'
+            }
         
-        results = []
-        for i, input_data in enumerate(input_data_list):
-            try:
-                prediction = WeatherImpactPredictor.predict(input_data)
-                result_row = {
-                    'prediction_id': i + 1,
-                    'season': input_data.get('season'),
-                    'yr': input_data.get('yr'),
-                    'mnth': input_data.get('mnth'),
-                    'hr': input_data.get('hr'),
-                    'holiday': input_data.get('holiday'),
-                    'weekday': input_data.get('weekday'),
-                    'workingday': input_data.get('workingday'),
-                    'temp': input_data.get('temp'),
-                    'atemp': input_data.get('atemp'),
-                    'hum': input_data.get('hum'),
-                    'windspeed': input_data.get('windspeed'),
-                    'predicted_impact': prediction.get('prediction', 'N/A'),
-                    'impact_score': prediction.get('impact_score', 'N/A'),
-                    'status': 'success'
-                }
-                results.append(result_row)
-            except Exception as e:
-                error_row = {
-                    'prediction_id': i + 1,
-                    'season': input_data.get('season'),
-                    'yr': input_data.get('yr'),
-                    'mnth': input_data.get('mnth'),
-                    'hr': input_data.get('hr'),
-                    'holiday': input_data.get('holiday'),
-                    'weekday': input_data.get('weekday'),
-                    'workingday': input_data.get('workingday'),
-                    'temp': input_data.get('temp'),
-                    'atemp': input_data.get('atemp'),
-                    'hum': input_data.get('hum'),
-                    'windspeed': input_data.get('windspeed'),
-                    'predicted_impact': 'ERROR',
-                    'impact_score': 'ERROR',
-                    'status': f'error: {str(e)}'
-                }
-                results.append(error_row)
-        
-        headers = ['prediction_id', 'season', 'yr', 'mnth', 'hr', 'holiday', 'weekday', 
-                  'workingday', 'temp', 'atemp', 'hum', 'windspeed', 
-                  'predicted_impact', 'impact_score', 'status']
+        # Headers ordinati logicamente: ID, Features, Risultati, Status
+        headers = [
+            'prediction_id',
+            # Features utilizzate dal modello
+            'weathersit', 'temp', 'atemp', 'hum', 'windspeed',
+            # Risultati della predizione
+            'predicted_impact', 'model_type', 'features_count', 'status'
+        ]
         
         filename = f'weather_impact_predictions_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
         
-        return create_csv_response(results, filename, headers)
+        return create_csv_response([result_row], filename, headers)
         
     except Exception as e:
         logging.error(f"Errore nel download CSV predizioni meteo: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-# curl -X POST -H "Content-Type: application/json" -d '{"input_data_list": [{"season": 1, "yr": 0, "mnth": 1, "hr": 0, "holiday": 0, "weekday": 6, "workingday": 0, "weathersit": 1, "temp": 0.24, "atemp": 0.2879, "hum": 0.81, "windspeed": 0.0}]}' http://localhost:5001/api/prediction/predict-rental-count/download
+# curl -X POST -H "Content-Type: application/json" -d '{"input_data": {"season": 1, "yr": 0, "mnth": 1, "hr": 0, "holiday": 0, "weekday": 6, "workingday": 0, "weathersit": 1, "temp": 0.24, "atemp": 0.2879, "hum": 0.81, "windspeed": 0.0}}' http://localhost:5001/api/prediction/predict-rental-count/download
 @prediction_bp.route('/predict-rental-count/download', methods=['POST'])
 def download_rental_count_predictions_csv():
     """Download predizioni conteggio noleggi in formato CSV"""
     try:
-        input_data_list = request.json.get('input_data_list', [])
-        if not input_data_list:
-            return jsonify({'error': 'Lista input_data_list richiesta'}), 400
+        input_data = request.json.get('input_data')
+        if not input_data:
+            return jsonify({'error': 'Richiesto input_data'}), 400
+
+        try:
+            prediction = RentalCountPredictor.predict(input_data)
+            
+            logging.info(f"Prediction: {prediction}")
+            
+            # Estrai le features utilizzate dal modello
+            features_used = prediction.get('features_used', [])
+            
+            result_row = {
+                'prediction_id': 1,
+                # Features utilizzate dal modello (nell'ordine corretto)
+                'season': input_data.get('season', 'N/A'),
+                'yr': input_data.get('yr', 'N/A'),
+                'mnth': input_data.get('mnth', 'N/A'),
+                'hr': input_data.get('hr', 'N/A'),
+                'holiday': input_data.get('holiday', 'N/A'),
+                'weekday': input_data.get('weekday', 'N/A'),
+                'workingday': input_data.get('workingday', 'N/A'),
+                'weathersit': input_data.get('weathersit', 'N/A'),
+                'temp': input_data.get('temp', 'N/A'),
+                'atemp': input_data.get('atemp', 'N/A'),
+                'hum': input_data.get('hum', 'N/A'),
+                'windspeed': input_data.get('windspeed', 'N/A'),
+                # Risultati della predizione
+                'predicted_rentals': int(prediction.get('predicted_rentals', 0)),
+                'model_type': prediction.get('model_type', 'N/A'),
+                'features_count': len(features_used),
+                'status': 'success'
+            }
+            
+        except Exception as e:
+            logging.error(f"Errore nella predizione: {str(e)}")
+            result_row = {
+                'prediction_id': 1,
+                # Features (anche in caso di errore per mantenere la struttura)
+                'season': input_data.get('season', 'N/A'),
+                'yr': input_data.get('yr', 'N/A'),
+                'mnth': input_data.get('mnth', 'N/A'),
+                'hr': input_data.get('hr', 'N/A'),
+                'holiday': input_data.get('holiday', 'N/A'),
+                'weekday': input_data.get('weekday', 'N/A'),
+                'workingday': input_data.get('workingday', 'N/A'),
+                'weathersit': input_data.get('weathersit', 'N/A'),
+                'temp': input_data.get('temp', 'N/A'),
+                'atemp': input_data.get('atemp', 'N/A'),
+                'hum': input_data.get('hum', 'N/A'),
+                'windspeed': input_data.get('windspeed', 'N/A'),
+                # Risultati in errore
+                'predicted_rentals': 'ERROR',
+                'model_type': 'ERROR',
+                'features_count': 'ERROR',
+                'status': f'error: {str(e)}'
+            }
         
-        results = []
-        for i, input_data in enumerate(input_data_list):
-            try:
-                prediction = RentalCountPredictor.predict(input_data)
-                result_row = {
-                    'prediction_id': i + 1,
-                    'season': input_data.get('season'),
-                    'yr': input_data.get('yr'),
-                    'mnth': input_data.get('mnth'),
-                    'hr': input_data.get('hr'),
-                    'holiday': input_data.get('holiday'),
-                    'weekday': input_data.get('weekday'),
-                    'workingday': input_data.get('workingday'),
-                    'weathersit': input_data.get('weathersit'),
-                    'temp': input_data.get('temp'),
-                    'atemp': input_data.get('atemp'),
-                    'hum': input_data.get('hum'),
-                    'windspeed': input_data.get('windspeed'),
-                    'predicted_count': prediction.get('prediction', 'N/A'),
-                    'confidence_interval_low': prediction.get('confidence_interval', {}).get('low', 'N/A'),
-                    'confidence_interval_high': prediction.get('confidence_interval', {}).get('high', 'N/A'),
-                    'status': 'success'
-                }
-                results.append(result_row)
-            except Exception as e:
-                error_row = {
-                    'prediction_id': i + 1,
-                    'season': input_data.get('season'),
-                    'yr': input_data.get('yr'),
-                    'mnth': input_data.get('mnth'),
-                    'hr': input_data.get('hr'),
-                    'holiday': input_data.get('holiday'),
-                    'weekday': input_data.get('weekday'),
-                    'workingday': input_data.get('workingday'),
-                    'weathersit': input_data.get('weathersit'),
-                    'temp': input_data.get('temp'),
-                    'atemp': input_data.get('atemp'),
-                    'hum': input_data.get('hum'),
-                    'windspeed': input_data.get('windspeed'),
-                    'predicted_count': 'ERROR',
-                    'confidence_interval_low': 'ERROR',
-                    'confidence_interval_high': 'ERROR',
-                    'status': f'error: {str(e)}'
-                }
-                results.append(error_row)
-        
-        headers = ['prediction_id', 'season', 'yr', 'mnth', 'hr', 'holiday', 'weekday', 
-                  'workingday', 'weathersit', 'temp', 'atemp', 'hum', 'windspeed', 
-                  'predicted_count', 'confidence_interval_low', 'confidence_interval_high', 'status']
+        # Headers ordinati logicamente: ID, Features, Risultati, Status
+        headers = [
+            'prediction_id',
+            # Features utilizzate dal modello
+            'season', 'yr', 'mnth', 'hr', 'holiday', 'weekday', 'workingday', 
+            'weathersit', 'temp', 'atemp', 'hum', 'windspeed',
+            # Risultati della predizione
+            'predicted_rentals', 'model_type', 'features_count', 'status'
+        ]
         
         filename = f'rental_count_predictions_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
         
-        return create_csv_response(results, filename, headers)
+        return create_csv_response([result_row], filename, headers)
         
     except Exception as e:
         logging.error(f"Errore nel download CSV predizioni conteggio: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
-# curl -X POST -H "Content-Type: application/json" -d '{"input_data_list": [{"season": 1, "yr": 0, "mnth": 1, "hr": 0, "holiday": 0, "weekday": 6, "workingday": 0, "weathersit": 1, "temp": 0.24, "atemp": 0.2879, "hum": 0.81, "windspeed": 0.0}], "prediction_types": ["peak_demand", "weather_impact", "rental_count"]}' http://localhost:5001/api/prediction/download-all-predictions -o all_predictions.csv
-@prediction_bp.route('/download-all-predictions', methods=['POST'])
-def download_all_predictions_csv():
-    """Download di tutte le predizioni in un unico file CSV"""
-    try:
-        input_data_list = request.json.get('input_data_list', [])
-        prediction_types = request.json.get('prediction_types', ['peak_demand', 'weather_impact', 'rental_count'])
-        
-        if not input_data_list:
-            return jsonify({'error': 'Lista input_data_list richiesta'}), 400
-        
-        # Crea un CSV con tutte le predizioni
-        output = io.StringIO()
-        writer = csv.writer(output)
-        
-        # Header generale
-        writer.writerow(['=== REPORT PREDIZIONI COMPLETE ==='])
-        writer.writerow([f'Generato il: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'])
-        writer.writerow([f'Numero di predizioni: {len(input_data_list)}'])
-        writer.writerow([])
-        
-        for prediction_type in prediction_types:
-            writer.writerow([f'=== {prediction_type.upper().replace("_", " ")} ==='])
-            
-            if prediction_type == 'peak_demand':
-                headers = ['prediction_id', 'season', 'yr', 'mnth', 'hr', 'holiday', 'weekday', 
-                          'workingday', 'weathersit', 'temp', 'atemp', 'hum', 'windspeed', 
-                          'predicted_peak', 'confidence', 'status']
-                writer.writerow(headers)
-                
-                for i, input_data in enumerate(input_data_list):
-                    try:
-                        prediction = PeakDemandPredictor.predict(input_data)
-                        row = [i + 1, input_data.get('season'), input_data.get('yr'), 
-                              input_data.get('mnth'), input_data.get('hr'), input_data.get('holiday'),
-                              input_data.get('weekday'), input_data.get('workingday'), 
-                              input_data.get('weathersit'), input_data.get('temp'), 
-                              input_data.get('atemp'), input_data.get('hum'), 
-                              input_data.get('windspeed'), prediction.get('prediction', 'N/A'),
-                              prediction.get('confidence', 'N/A'), 'success']
-                        writer.writerow(row)
-                    except Exception as e:
-                        row = [i + 1, input_data.get('season'), input_data.get('yr'), 
-                              input_data.get('mnth'), input_data.get('hr'), input_data.get('holiday'),
-                              input_data.get('weekday'), input_data.get('workingday'), 
-                              input_data.get('weathersit'), input_data.get('temp'), 
-                              input_data.get('atemp'), input_data.get('hum'), 
-                              input_data.get('windspeed'), 'ERROR', 'ERROR', f'error: {str(e)}']
-                        writer.writerow(row)
-            
-            elif prediction_type == 'weather_impact':
-                headers = ['prediction_id', 'season', 'yr', 'mnth', 'hr', 'holiday', 'weekday', 
-                          'workingday', 'temp', 'atemp', 'hum', 'windspeed', 
-                          'predicted_impact', 'impact_score', 'status']
-                writer.writerow(headers)
-                
-                for i, input_data in enumerate(input_data_list):
-                    try:
-                        prediction = WeatherImpactPredictor.predict(input_data)
-                        row = [i + 1, input_data.get('season'), input_data.get('yr'), 
-                              input_data.get('mnth'), input_data.get('hr'), input_data.get('holiday'),
-                              input_data.get('weekday'), input_data.get('workingday'), 
-                              input_data.get('temp'), input_data.get('atemp'), 
-                              input_data.get('hum'), input_data.get('windspeed'),
-                              prediction.get('prediction', 'N/A'), 
-                              prediction.get('impact_score', 'N/A'), 'success']
-                        writer.writerow(row)
-                    except Exception as e:
-                        row = [i + 1, input_data.get('season'), input_data.get('yr'), 
-                              input_data.get('mnth'), input_data.get('hr'), input_data.get('holiday'),
-                              input_data.get('weekday'), input_data.get('workingday'), 
-                              input_data.get('temp'), input_data.get('atemp'), 
-                              input_data.get('hum'), input_data.get('windspeed'),
-                              'ERROR', 'ERROR', f'error: {str(e)}']
-                        writer.writerow(row)
-            
-            elif prediction_type == 'rental_count':
-                headers = ['prediction_id', 'season', 'yr', 'mnth', 'hr', 'holiday', 'weekday', 
-                          'workingday', 'weathersit', 'temp', 'atemp', 'hum', 'windspeed', 
-                          'predicted_count', 'confidence_interval_low', 'confidence_interval_high', 'status']
-                writer.writerow(headers)
-                
-                for i, input_data in enumerate(input_data_list):
-                    try:
-                        prediction = RentalCountPredictor.predict(input_data)
-                        row = [i + 1, input_data.get('season'), input_data.get('yr'), 
-                              input_data.get('mnth'), input_data.get('hr'), input_data.get('holiday'),
-                              input_data.get('weekday'), input_data.get('workingday'), 
-                              input_data.get('weathersit'), input_data.get('temp'), 
-                              input_data.get('atemp'), input_data.get('hum'), 
-                              input_data.get('windspeed'), prediction.get('prediction', 'N/A'),
-                              prediction.get('confidence_interval', {}).get('low', 'N/A'),
-                              prediction.get('confidence_interval', {}).get('high', 'N/A'), 'success']
-                        writer.writerow(row)
-                    except Exception as e:
-                        row = [i + 1, input_data.get('season'), input_data.get('yr'), 
-                              input_data.get('mnth'), input_data.get('hr'), input_data.get('holiday'),
-                              input_data.get('weekday'), input_data.get('workingday'), 
-                              input_data.get('weathersit'), input_data.get('temp'), 
-                              input_data.get('atemp'), input_data.get('hum'), 
-                              input_data.get('windspeed'), 'ERROR', 'ERROR', 'ERROR', f'error: {str(e)}']
-                        writer.writerow(row)
-            
-            writer.writerow([])  # Riga vuota tra sezioni
-        
-        output.seek(0)
-        filename = f'all_predictions_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
-        
-        return Response(
-            output.getvalue(),
-            mimetype='text/csv',
-            headers={
-                'Content-Disposition': f'attachment; filename={filename}',
-                'Content-Type': 'text/csv; charset=utf-8'
-            }
-        )
-        
-    except Exception as e:
-        logging.error(f"Errore nel download CSV predizioni complete: {str(e)}")
         return jsonify({'error': str(e)}), 500

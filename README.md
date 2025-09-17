@@ -139,6 +139,13 @@ Analizza la varie metriche di aggregazione oraria, come per esempio il numero me
 ```bash
 curl -X GET http://localhost:5001/api/analytics/mean-rental-by-hour
 ```
+#### 📥 Download CSV Analisi Pattern Orari
+Permette di scaricare l'analisi dei pattern orari in un file CSV.
+Indicare il nome del file con `-o tuo-file.csv` per salvarlo localmente
+
+```bash
+curl -X GET http://localhost:5001/api/analytics/mean-rental-by-hour/download -o tuo-file.csv
+``` 
 
 ### 📅 **Analisi Weekday vs Weekend**
 Confronta le metriche aggregate distinguendo tra giorni feriali e weekend.
@@ -146,6 +153,13 @@ Confronta le metriche aggregate distinguendo tra giorni feriali e weekend.
 ```bash
 curl -X GET http://localhost:5001/api/analytics/weekday-vs-weekend
 ```
+#### 📥 Download CSV Analisi Weekday vs Weekend
+Permette di scaricare l'analisi weekday vs weekend in un file CSV.
+Indicare il nome del file con `-o tuo-file.csv` per salvarlo localmente
+
+```bash
+curl -X GET http://localhost:5001/api/analytics/weekday-vs-weekend/download -o tuo-file.csv
+``` 
 
 ### 🌤️ **Analisi Impatto Meteo**
 Analizza l'influenza delle condizioni meteorologiche sui noleggi.
@@ -154,13 +168,13 @@ Analizza l'influenza delle condizioni meteorologiche sui noleggi.
 curl -X GET http://localhost:5001/api/analytics/weather-impact
 ```
 
-### 📥 **Download Delle Analisi precedenti in CSV**
-Permette di scaricare tutte le analisi precedenti in un unico file CSV.
-Indicare il nome del file con `-o tuo-file.csv` per salvarlo localmente.
+#### 📥 Download CSV Analisi Impatto Meteo
+Permette di scaricare l'analisi dell'impatto meteo in un file CSV
+Indicare il nome del file con `-o tuo-file.csv` per salvarlo localmente
 
 ```bash
-curl -X GET http://localhost:5001/api/analytics/download-all -o tuo-file.csv
-```
+curl -X GET http://localhost:5001/api/analytics/weather-impact/download -o tuo-file.csv
+``` 
 
 ### 🤖 **Training Modello Picchi di Domanda**
 Addestra il modello di machine learning per la previsione dei picchi di domanda.
@@ -213,8 +227,10 @@ curl -X POST -H "Content-Type: application/json" \
   # I valori usati sono di esempio
 ```
 
-### 🌡️ **Predizione Impatto Meteo**
-Predice l'impatto delle condizioni meteorologiche sui noleggi.
+#### 📥 Download Predizioni dei Picchi di Domanda in CSV
+Permette di scaricare le predizioni dei picchi di domanda in un file CSV.
+Le predizioni vengono effettuate sulla lista di input fornita.
+Indicare il nome del file con `-o tuo-file.csv` per salvarlo localmente
 
 ```bash
 curl -X POST -H "Content-Type: application/json" \
@@ -232,7 +248,43 @@ curl -X POST -H "Content-Type: application/json" \
     "hum": 0.81,
     "windspeed": 0.0
   }}' \
+  http://localhost:5001/api/prediction/predict-peak-demand/download -o tuo-file.csv
+
+  # I valori usati sono di esempio
+```
+
+### 🌡️ **Predizione Impatto Meteo**
+Predice l'impatto delle condizioni meteorologiche sui noleggi.
+
+```bash
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"input_data": {
+    "weathersit": 1,
+    "temp": 0.24,
+    "atemp": 0.2879,
+    "hum": 0.81,
+    "windspeed": 0.0
+  }}' \
   http://localhost:5001/api/prediction/predict-weather-impact
+
+  # I valori usati sono di esempio
+```
+
+#### 📥 Download Predizioni dell'Impatto Meteo in CSV
+Permette di scaricare le predizioni dell'impatto meteo in un file CSV.
+Le predizioni vengono effettuate sulla lista di input fornita.
+Indicare il nome del file con `-o tuo-file.csv` per salvarlo localmente
+
+```bash
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"input_data": {
+    "weathersit": 1,
+    "temp": 0.24,
+    "atemp": 0.2879,
+    "hum": 0.81,
+    "windspeed": 0.0
+  }}' \
+  http://localhost:5001/api/prediction/predict-weather-impact/download -o tuo-file.csv
 
   # I valori usati sono di esempio
 ```
@@ -260,6 +312,33 @@ curl -X POST -H "Content-Type: application/json" \
 
   # I valori usati sono di esempio
 ```
+
+#### 📥 Download Predizioni del Conteggio Noleggi in CSV
+Permette di scaricare le predizioni del conteggio noleggi in un file CSV.
+Le predizioni vengono effettuate sulla lista di input fornita.
+Indicare il nome del file con `-o tuo-file.csv` per salvarlo localmente
+```bash
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"input_data": {
+    "season": 1,
+    "yr": 0,
+    "mnth": 1,
+    "hr": 0,
+    "holiday": 0,
+    "weekday": 6,
+    "workingday": 0,
+    "weathersit": 1,
+    "temp": 0.24,
+    "atemp": 0.2879,
+    "hum": 0.81,
+    "windspeed": 0.0
+  }}' \
+  http://localhost:5001/api/prediction/predict-rental-count/download -o tuo-file.csv
+  # I valori usati sono di esempio
+```
+
+
+
 
 ### 📥 **Download Predizioni in CSV**
 Permette di scaricare le predizioni su tutti i modelli in un unico file CSV.
